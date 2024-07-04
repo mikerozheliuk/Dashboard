@@ -1,4 +1,4 @@
-import { useReducer, useMemo } from "react";
+import { useReducer, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -30,7 +30,8 @@ type State = {
 
 type Action =
   | { type: "SET_PAGE"; page: number }
-  | { type: "SET_ACTIVE_ROW"; rowName: string };
+  | { type: "SET_ACTIVE_ROW"; rowName: string }
+  | { type: "RESET_PAGE" };
 
 // Початковий стан
 const initialState: State = {
@@ -50,6 +51,11 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         activeRow: action.rowName,
+      };
+    case "RESET_PAGE":
+      return {
+        ...state,
+        page: 1,
       };
     default:
       return state;
@@ -87,6 +93,10 @@ export const TablePage: React.FC<TablePageProps> = ({ searchQuery }) => {
     dispatch({ type: "SET_ACTIVE_ROW", rowName });
   };
 
+  useEffect(() => {
+    dispatch({ type: "RESET_PAGE" });
+  }, [searchQuery]);
+
   return (
     <>
       <TableContainer className={styles.table} component={Paper}>
@@ -105,7 +115,7 @@ export const TablePage: React.FC<TablePageProps> = ({ searchQuery }) => {
             {currentRows.length > 0 ? (
               currentRows.map((row) => (
                 <TableRow
-                  key={row.name}
+                  key={row.id}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                   onClick={() => handleRowClick(row.name)}
                   className={classNames({ [styles.activeRow]: activeRow === row.name })}
@@ -141,7 +151,7 @@ export const TablePage: React.FC<TablePageProps> = ({ searchQuery }) => {
       </TableContainer>
       <div className={styles.pagination}>
         <div className={styles.pagination__info}>
-          Showing data {startIndex + 1} to {Math.min(endIndex, filteredRows.length)} of{" "}
+          Showing data {startIndex + 1} to {Math.min(endIndex, filteredRows.length)} of
           {filteredRows.length} entries
         </div>
         <Pagination

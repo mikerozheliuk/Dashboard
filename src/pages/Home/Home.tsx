@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { TablePage } from "../TablePage/TablePage";
 import styles from "./home.module.scss";
 
 export const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
-  };
+  }, []);
 
   return (
     <div className={styles.home}>
