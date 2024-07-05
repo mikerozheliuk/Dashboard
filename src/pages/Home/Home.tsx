@@ -1,13 +1,19 @@
-import { useCallback, useState } from "react";
-import { TablePage } from "../TablePage/TablePage";
+import { useCallback } from "react";
 import styles from "./home.module.scss";
 
-export const Home = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+import { rows } from "../TablePage/data";
+import { useTable, MyTable } from "../../components/Table";
 
-  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  }, []);
+export const Home = () => {
+  const { state, dispatch } = useTable(rows as unknown as []);
+
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      dispatch({ type: "SET_SEARCH", search: event.target.value });
+      dispatch({ type: "FILTER_ROWS" });
+    },
+    [dispatch]
+  );
 
   return (
     <div className={styles.home}>
@@ -21,13 +27,13 @@ export const Home = () => {
             className={styles.home__input}
             type="search"
             placeholder="Search"
-            value={searchQuery}
+            value={state.search}
             onChange={handleSearchChange}
           />
         </div>
       </div>
       <div className={styles.home__table}>
-        <TablePage searchQuery={searchQuery} />
+        <MyTable {...{ state, dispatch }} />
       </div>
     </div>
   );

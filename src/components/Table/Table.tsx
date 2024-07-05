@@ -1,4 +1,5 @@
-import { useReducer, useMemo, useEffect } from "react";
+import { useMemo } from "react";
+import classNames from "classnames";
 import {
   Table,
   TableBody,
@@ -10,95 +11,31 @@ import {
   Pagination,
 } from "@mui/material";
 
-import classNames from "classnames";
+import { UseTableReturn } from "./model";
 
-import { rows } from "./data";
-
-import styles from "./tablePage.module.scss";
-
-const ROWS_PER_PAGE = 8;
+import styles from "./table-page.module.scss";
 
 const getStatusClass = (status: string) => {
   return status === "active" ? styles.activeStatus : styles.inactiveStatus;
 };
 
-// Визначення типів для стану та дій
-type State = {
-  page: number;
-  activeRow: string | null;
-};
+export const MyTable: React.FC<UseTableReturn> = ({ state, dispatch }) => {
+  const { rows, filteredRows, rowsPerPage, page, activeRow } = state;
 
-type Action =
-  | { type: "SET_PAGE"; page: number }
-  | { type: "SET_ACTIVE_ROW"; rowName: string }
-  | { type: "RESET_PAGE" };
-
-// Початковий стан
-const initialState: State = {
-  page: 1,
-  activeRow: null,
-};
-
-// Редюсер функція
-const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case "SET_PAGE":
-      return {
-        ...state,
-        page: action.page,
-      };
-    case "SET_ACTIVE_ROW":
-      return {
-        ...state,
-        activeRow: action.rowName,
-      };
-    case "RESET_PAGE":
-      return {
-        ...state,
-        page: 1,
-      };
-    default:
-      return state;
-  }
-};
-
-interface TablePageProps {
-  searchQuery: string;
-}
-
-export const TablePage: React.FC<TablePageProps> = ({ searchQuery }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-
-  const { page, activeRow } = state;
-
-  const startIndex = (page - 1) * ROWS_PER_PAGE;
-  const endIndex = startIndex + ROWS_PER_PAGE;
-
-  const filteredRows = useMemo(() => {
-    return rows.filter((row) =>
-      row.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
-
-  const currentRows = useMemo(
-    () => filteredRows.slice(startIndex, endIndex),
-    [endIndex, filteredRows, startIndex]
-  );
+  const startIndex = (page - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
 
   const handleChangePage = (
     _event: React.ChangeEvent<unknown>,
     newPage: number
   ) => {
     dispatch({ type: "SET_PAGE", page: newPage });
+    dispatch({ type: "FILTER_ROWS" });
   };
 
   const handleRowClick = (rowName: string) => {
     dispatch({ type: "SET_ACTIVE_ROW", rowName });
   };
-
-  useEffect(() => {
-    dispatch({ type: "RESET_PAGE" });
-  }, [searchQuery]);
 
   return (
     <>
@@ -119,8 +56,8 @@ export const TablePage: React.FC<TablePageProps> = ({ searchQuery }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentRows.length > 0 ? (
-              currentRows.map((row) => (
+            {filteredRows.length > 0 ? (
+              filteredRows.map((row) => (
                 <TableRow
                   key={row.id}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -178,12 +115,11 @@ export const TablePage: React.FC<TablePageProps> = ({ searchQuery }) => {
       </TableContainer>
       <div className={styles.pagination}>
         <div className={styles.pagination__info}>
-          Showing data {startIndex + 1} to{" "}
-          {Math.min(endIndex, filteredRows.length)} of
-          {filteredRows.length} entries
+          Showing data {startIndex + 1} to {Math.min(endIndex, rows.length)} of{" "}
+          {rows.length} entries
         </div>
         <Pagination
-          count={Math.ceil(filteredRows.length / ROWS_PER_PAGE)}
+          count={Math.ceil(rows.length / rowsPerPage)}
           page={page}
           onChange={handleChangePage}
           variant="outlined"
